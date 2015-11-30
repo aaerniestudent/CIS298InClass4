@@ -2,6 +2,7 @@ package edu.kvcc.cis298.inclass3.inclass3;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 import edu.kvcc.cis298.inclass3.inclass3.database.CrimeBaseHelper;
+import edu.kvcc.cis298.inclass3.inclass3.database.CrimeCursorWrapper;
 import edu.kvcc.cis298.inclass3.inclass3.database.CrimeDbSchema;
 import edu.kvcc.cis298.inclass3.inclass3.database.CrimeDbSchema.CrimeTable;
 
@@ -30,7 +32,6 @@ public class CrimeLab {
     private Context mContext;
     //variable for database
     private SQLiteDatabase mDatabase;
-
 
     //This is the method that will be used to get an instance of
     //CrimeLab. It will check to see if the current instance in the
@@ -57,7 +58,7 @@ public class CrimeLab {
         //that we wrote o get the writable database. We didn't write
         //that function, it comes from the parent class of CBH.
         mDatabase = new CrimeBaseHelper(mContext).getWritableDatabase();
-        //Instanciate a new ArrayList, which is a child class that
+        //Instantiate a new ArrayList, which is a child class that
         //Implements the Interface List. Because ArrayList is a child
         //of List, we can store it in the mCrimes variable which is of
         //type List, and not ArrayList. (Polymorphism)
@@ -80,19 +81,24 @@ public class CrimeLab {
         ContentValues values = getContentValues(c);
         //call the insert method of our class level version of CrimeBaseHelper class.
         //insert is inherited from CBH's parent class.
-        mDatabase.insert(CrimeTable.NAME,null, values);
-    }
-
-    public void updateCrime(Crime crime) {
-        String uuidString = crime.getId().toString();
-        ContentValues values = getContentValues(crime);
-        mDatabase.update(CrimeTable.NAME, values,CrimeTable.Cols.UUID + " = ?",new String[] {uuidString});
+        mDatabase.insert(CrimeTable.NAME, null, values);
     }
 
     //Getter to get the crimes
     public List<Crime> getCrimes() {
         //return mCrimes;
-        return new ArrayList<>();
+        List<Crime> crimes = new ArrayList<>();
+        CrimeCursorWrapper cursor = queryCrimes(null,null);
+        try {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                crimes.add(cursor.getCrime());
+                cursor.moveToNext();
+            }
+        } finally {
+            cursor.close();
+        }
+        return crimes;
     }
 
     //Method to get a specific crime based on the
@@ -108,10 +114,30 @@ public class CrimeLab {
          *
         }*/
         //no match, return null.
-        return null;
+        CrimeCursorWrapper cursor = queryCrimes(
+                CrimeTable.Cols.UUID + " = ?",
+                new String[] { id.toString()}
+        );
+        try {
+            if (cursor.getCount() == 0) {
+                return null;
+            }
+            cursor.moveToFirst();
+            return cursor.getCrime();
+        }finally {
+            cursor.close();
+        }
     }
 
-    //static method to do the work of taking in a crime and creating a content values object that can be used to insert the crime into the database. the contentvalues class operates as a hash table, or "key => value" array. The key refers to the column name of the database and the vale refers to the value we would like to put into the database.
+    public void updateCrime(Crime crime) {
+        String uuidString = crime.getId().toString();
+        ContentValues values = getContentValues(crime);
+        mDatabase.update(CrimeTable.NAME, values,CrimeTable.Cols.UUID + " = ?",new String[] {uuidString});
+    }
+    //static method to do the work of taking in a crime and creating a content values object
+    // that can be used to insert the crime into the database. the contentvalues class operates
+    // as a hash table, or "key => value" array. The key refers to the column name of the
+    // database and the vale refers to the value we would like to put into the database.
     private static ContentValues getContentValues(Crime crime) {
         //make a new object
         ContentValues values = new ContentValues();
@@ -126,6 +152,20 @@ public class CrimeLab {
         values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
 
         return values;
+    }
 
+    //method to query the table for crimes. It takes in a where
+    //clause and args that can be used for the query.
+    private CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs) {
+        Cursor cursor = mDatabase.query(
+                CrimeTable.NAME,  // table name
+                null,  //Columns - null selects all columns
+                whereClause,  // where
+                whereArgs,  // args for where
+                null,  // group by
+                null,  // having
+                null   // order by
+        );
+        return new CrimeCursorWrapper(cursor);
     }
 }

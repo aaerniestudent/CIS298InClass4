@@ -16,8 +16,14 @@ public class Crime {
 
     //Default constructor
     public Crime() {
+        this(UUID.randomUUID());
         //Make a new unique id for this particular crime
-        mId = UUID.randomUUID();
+        //mId = UUID.randomUUID();
+        //mDate = new Date();
+    }
+
+    public Crime(UUID id){
+        mId = id;
         mDate = new Date();
     }
 
