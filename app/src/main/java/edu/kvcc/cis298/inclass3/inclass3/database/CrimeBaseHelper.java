@@ -31,7 +31,8 @@ public class CrimeBaseHelper extends SQLiteOpenHelper{
                 CrimeTable.Cols.UUID + ", " +
                 CrimeTable.Cols.TITLE + ", " +
                 CrimeTable.Cols.DATE + ", " +
-                CrimeTable.Cols.SOLVED + ")" );
+                CrimeTable.Cols.SOLVED + ", " +
+                CrimeTable.Cols.SUSPECT + ")" );
     }
 
     //this is the method that will get called if the the database already exists

@@ -135,7 +135,7 @@ public class CrimeLab {
         mDatabase.update(CrimeTable.NAME, values,CrimeTable.Cols.UUID + " = ?",new String[] {uuidString});
     }
     //static method to do the work of taking in a crime and creating a content values object
-    // that can be used to insert the crime into the database. the contentvalues class operates
+    // that can be used to insert the crime into the database. the content values class operates
     // as a hash table, or "key => value" array. The key refers to the column name of the
     // database and the vale refers to the value we would like to put into the database.
     private static ContentValues getContentValues(Crime crime) {
@@ -150,6 +150,8 @@ public class CrimeLab {
         //put the solved bool converted using a ternary operator.
         //That evaluates an expression as true("? 1 :") / false (": 0") statement.
         values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+
+        values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
 
         return values;
     }
